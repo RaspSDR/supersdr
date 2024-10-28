@@ -10,11 +10,11 @@ fl = flags()
 
 parser = OptionParser()
 parser.add_option("-w", "--password", type=str,
-                  help="KiwiSDR password", dest="kiwipassword", default=default_kiwi_password)
-parser.add_option("-s", "--kiwiserver", type=str,
-                  help="KiwiSDR server name", dest="kiwiserver", default="kiwisdr.local")
-parser.add_option("-p", "--kiwiport", type=int,
-                  help="port number", dest="kiwiport", default=default_kiwi_port)
+                  help="password", dest="password", default=default_kiwi_password)
+parser.add_option("-s", "--server", type=str,
+                  help="Server name", dest="server", default="web-888.local")
+parser.add_option("-p", "--port", type=int,
+                  help="port number", dest="port", default=default_kiwi_port)
 parser.add_option("-S", "--radioserver", type=str,
                   help="RTX server name", dest="radioserver", default="localhost")
 parser.add_option("-P", "--radioport", type=int,
@@ -69,9 +69,9 @@ kiwilist = kiwi_list()
 
 palRGB = disp.create_cm(options["colormap"])
 
-kiwi_host = options['kiwiserver']
-kiwi_port = options['kiwiport']
-kiwi_password = options['kiwipassword']
+kiwi_host = options['server']
+kiwi_port = options['port']
+kiwi_password = options['password']
 freq = options['freq'] # this is the central freq in kHz
 zoom = options['zoom'] 
 radiohost = options['radioserver']
