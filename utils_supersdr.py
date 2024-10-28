@@ -37,6 +37,8 @@ from mod_pywebsocket.stream import Stream
 from mod_pywebsocket.stream import StreamOptions
 from mod_pywebsocket._stream_base import ConnectionTerminatedException
 
+from urllib.parse import urlparse
+
 VERSION = "v3.14"
 
 TENMHZ = 10000 # frequency threshold for auto mode (USB/LSB) switch
@@ -402,54 +404,31 @@ class kiwi_list():
         self.connect_new_flag = False
 
         try:
-            self.load_from_disk()
+            self.load_from_network()
         except:
             pass
 
-    def save_to_disk(self):
-        no_file_flag = False
-        try:
-            with open(self.kiwi_list_filename, encoding="latin") as fd:
-                data = fd.readlines()
-            if len(data) == 0:
-                no_file_flag = True
-        except:
-            no_file_flag = True
-
-        try:
-            with open(self.kiwi_list_filename, "a") as fd:
-                col_count = self.kiwi_data.count(":")
-                if no_file_flag:
-                    fd.write("KIWIHOST;KIWIPORT;KIWIPASSWORD;COMMENTS\n")
-                fd.write(self.kiwi_data.replace(":", ";") + ";"*(3-col_count) + "\n")
-            self.load_from_disk()
-        except:
-            print("Cannot save kiwi list to disk!")
-
-    def load_from_disk(self):
+    def load_from_network(self):
         self.kiwi_list = []
-        try:
-            with open(self.kiwi_list_filename, encoding="latin") as fd:
-                data = fd.readlines()
 
-            label_list = data[0].rstrip().split(";")
-            for row in data[1:]:
-                col_count = row.count(";")
-                if row[0] == "#":
+        try:
+            url = "https://www.rx-888.com/api/devices"
+
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+            devices = data.get("devices", [])
+            for device in devices:
+                if device['status'] != "active":
                     continue
-                fields = row.rstrip().split(";")
-                host = fields[0]
-                if len(host)==0:
-                    continue 
-                try:
-                    port = int(fields[1])
-                except:
-                    self.default_port
-                password = fields[2] if col_count>1 else ""
-                comments = fields[3] if col_count>2 else ""
-                self.kiwi_list.append((host, port, password, comments))
+                url = device['url']
+                parsed_url = urlparse(url)
+                host = parsed_url.hostname
+                port = parsed_url.port
+                self.kiwi_list.append((host, port, "", device['name']))
+
         except:
-            print("No kiwi list file found!")
+            print("Get Device list failed!")
             return None
 
     def choose_kiwi_dialog(self):
@@ -485,12 +464,10 @@ class kiwi_list():
         frame_bottom = tkinter.Frame(self.root, borderwidth=5)
         frame_bottom.pack(fill=BOTH, expand=True)
         self.b_connect = tkinter.Button(master=frame_bottom, text = "Connect", command = self.connect_new_kiwi)
-        self.b_connect_save = tkinter.Button(master=frame_bottom, text = "Save and Connect", command = lambda: self.connect_new_kiwi(True))
         self.b_reload = tkinter.Button(master=frame_bottom, text = "Reload", command = self.reload_and_refresh)
         self.b_cancel = tkinter.Button(master=frame_bottom, text = "Cancel", command = self.root.destroy)
         
         self.b_connect.pack(side=LEFT)
-        self.b_connect_save.pack(side=LEFT)
         self.b_cancel.pack(side=RIGHT)
         self.b_reload.pack(side=RIGHT)
         frame_bottom.pack()
@@ -509,7 +486,7 @@ class kiwi_list():
         self.t.configure(state='disabled')
 
     def reload_and_refresh(self):
-        self.load_from_disk()
+        self.load_from_network()
         self.refresh_list()
 
         
@@ -543,8 +520,6 @@ class kiwi_list():
                     self.kiwi_password = kiwi_data_list[2]
                 self.connect_new_flag = True
                 self.root.destroy()
-                if save_flag:
-                    self.save_to_disk()
 
 
 class kiwi_sdr():
