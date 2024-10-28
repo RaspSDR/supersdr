@@ -1,0 +1,12 @@
+certifi==2024.8.30
+cffi==1.17.1
+charset-normalizer==3.4.0
+idna==3.10
+numpy==1.26.4
+pycparser==2.22
+pygame==2.6.1
+requests==2.32.3
+scipy==1.14.1
+sounddevice==0.5.1
+urllib3==2.2.3
+xmltodict==0.14.2
